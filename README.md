@@ -2,7 +2,7 @@ Design & Implementation of a pipelined classical MIPS Processor used in educatio
 
 The Processor implements the following instructions:
 
-1 - add
+1 - add 
 2 - sub
 3 - multu
 4 - sll
