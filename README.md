@@ -1,6 +1,6 @@
 Design & Implementation of a pipelined classical MIPS Processor.
 -
-The Processor implements the following instructions:
+>The Processor implements the following instructions:
 
 
 1 - add
@@ -14,10 +14,10 @@ The Processor implements the following instructions:
 9 - beq
 10 - jal
 
-The specific instructions were chosen by us with the common goal of having all MIPS instruction formats (R-type, I-type, J-type) implemented in a way
+>The specific instructions were chosen by us with the common goal of having all MIPS instruction formats (R-type, I-type, J-type) implemented in a way
 different to what is typically taught in a classroom.
 
-Since not all instructions from a specific type are identical (such as lw and an immediate arithemtic/logic instruction for instance), we had to think
+>Since not all instructions from a specific type are identical (such as lw and an immediate arithemtic/logic instruction for instance), we had to think
 about which instructions to choose such that all the addressing modes are implemented. Our instruction set is classified into the addressing modes as
 follows:
 
@@ -27,4 +27,4 @@ follows:
 -> PC-Relative Addressing: beq
 -> Psuedodirect Addressing: jal
 
-A collaboration between: Abdelrahman Mansour, Amro Elshafey, Mahmoud Halwani
+>**A collaboration between: Abdelrahman Mansour, Amro Elshafey, Mahmoud Halwani**
