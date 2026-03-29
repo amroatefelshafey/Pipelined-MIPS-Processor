@@ -11,7 +11,7 @@
           <mxGeometry height="70" width="40" x="170" y="170" as="geometry" />
         </mxCell>
         <mxCell id="g6mddH-O_4AUW5BNOc9N-3" parent="1" style="shadow=0;dashed=0;align=center;html=1;strokeWidth=1;shape=mxgraph.electrical.abstract.mux2;whiteSpace=wrap;" value="&lt;b&gt;2X1 MUX&lt;/b&gt;" vertex="1">
-          <mxGeometry height="120" width="80" x="230" y="230" as="geometry" />
+          <mxGeometry height="120" width="80" x="70" y="100" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
