@@ -22,7 +22,7 @@ casex(opcode)
 
 6'b000100: control = 14'bx00x0001000101; // BEQ
 
-6'b000011: control = 14'bxxx00000010x00; // JAL
+6'b000011: control = 14'bxxx01000010x00; // JAL
 
 default: control = 14'bxxxxxxxxxxxxxx;   // default to avoid latch
 
