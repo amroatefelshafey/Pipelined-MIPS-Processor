@@ -15,6 +15,20 @@ module hazard_unit(
   // DATA HAZARD HANDLING
   // Forwarding Logic (ForwardA & ForwardB)
 
+  // ----- ForwardA -----
+  assign ForwardA[0] = (IDEXrs == EXMEMrd) & EXMEMRegWrite & (EXMEMrd != 0);
+  assign ForwardA[1] = ForwardA[0] | (MEMWB.rd == IDEXrs) & (MEMWBRegWrite) & (MEMWBrd != 0);
+
+  // ----- ForwardB -----
+  always@(*) begin
+    if (MEMWBRegWrite & (MEMWBrd !=  0)
+        & (!EXMEMRegWrite | (EXMEMrd ==  0) | (EXMEMrd ==  IDEXrt))
+        & (MEMWBrd == IDEXrt)) ForwardB = 2'b10;
+
+    else if (MEMWBRegWrite & (MEMWBrd !=  0)
+             & (MEMWBrd == IDEXrt)) ForwardB = 2'b01;
+    
+    else ForwardB = 2'b00;
 
   // Load-Store forwarding Logic (ForwardDM)
   assign ForwardDM = MEMWBMemRead & (MEMWBrd == EXMEMrd);
