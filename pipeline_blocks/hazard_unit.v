@@ -9,7 +9,7 @@ module hazard_unit(
   
   output [1:0] ForwardA, ForwardB, // Forwarding signals
   output ForwardDM, // Deals with the load-store hazard
-  output Stall // These deal with load-use hazards which require a 1 cycle stall
+  output Stall // This deals with load-use hazards which require a 1 cycle stall
 );
 
   // DATA HAZARD HANDLING
@@ -17,7 +17,7 @@ module hazard_unit(
 
 
   // Load-Store forwarding Logic (ForwardDM)
-  assign ForwardDM = MEMWBMemRead & MEMWBrd & EXMEMrd;
-
+  assign ForwardDM = MEMWBMemRead & (MEMWBrd == EXMEMrd);
+  
   //Load-Use Stalling Logic (Stall, IFIDWrite, PCWrite)
-  assign Stall = IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt) ) & !Jump;
+  assign Stall = IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt) ) & !Jump; // Must asser the instruction is not a jump (jump signal here is from cycle 2)
