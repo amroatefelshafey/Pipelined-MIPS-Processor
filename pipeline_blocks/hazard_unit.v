@@ -20,4 +20,4 @@ module hazard_unit(
   assign ForwardDM = MEMWBMemRead & MEMWBrd & EXMEMrd;
 
   //Load-Use Stalling Logic (Stall, IFIDWrite, PCWrite)
-  assign Stall = IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt) ) & 
+  assign Stall = IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt) ) & !Jump;
