@@ -5,7 +5,7 @@ module hazard_unit(
   input [4:0] MEMWBrd,
   
   input EXMEMRegWrite, MEMWBRegWrite, // Conditions for data hazards (if no write, there is no hazard!)
-  input IDEXMemRead, MEMWBMemRead, // These deal with load-use and load-store hazards respectively
+  input IDEXMemRead, EXMEMMemRead, MEMWBMemRead, // These deal with load-use and load-store hazards respectively
 
   input PCSrc, Jump, // Necessary Signals to determine whether we flush or not
   
@@ -16,6 +16,9 @@ module hazard_unit(
   output Flush
 );
 
+
+  wire loadFollowingBranch = (IDEXMemRead | EXMEMMemRead) & PCSrc;
+  wire EXFollowingBranch = EXMEMRegWrite & (EXMEMrd != 0) & (IFIDrs  | IFIDrt);
   // DATA HAZARD HANDLING
   // Forwarding Logic (ForwardA & ForwardB)
 
@@ -39,7 +42,7 @@ module hazard_unit(
   assign ForwardDM = MEMWBMemRead & (MEMWBrd == EXMEMrd);
   
   // ----- Load-Use Stalling Logic (Stall, IFIDWrite, PCWrite) -----
-  assign Stall = IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt) ) & !Jump; // Must assert the instruction is not a jump 
+  assign Stall = (IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt) ) | )& !Jump; // Must assert the instruction is not a jump 
                                                                                     // (jump signal here is from cycle 2)
   // CONTROL HAZARD HANDLING
 
