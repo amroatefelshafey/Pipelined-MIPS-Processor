@@ -19,7 +19,7 @@ module hazard_unit(
 
 
   wire loadFollowingBranch = EXMEMMemRead & ( (EXMEMrd == IFIDrs) | (EXMEMrd == IFIDrt) ) & Branch ; // This deals with load-branch 2nd stall
-  wire EXFollowingBranch = IDEXRegWrite & (IDEXrd != 0) & ( (IFIDrs == IDEXrd) | (IFIDrt == IDEXrd) ) & Branch;
+  wire EXFollowingBranch = IDEXRegWrite & (IDEXrd != 0) & ( (IFIDrs == IDEXrd) | (IFIDrt == IDEXrd) ) & Branch; // This deals with R or I addressing-branch stall
   // DATA HAZARD HANDLING
   // Forwarding Logic (ForwardA & ForwardB)
 
@@ -43,7 +43,7 @@ module hazard_unit(
   assign ForwardDM = MEMWBMemRead & (MEMWBrd == EXMEMrd);
   
   // ----- Load-Use Stalling Logic (Stall, IFIDWrite, PCWrite) -----
-  assign Stall = (IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt) ) | loadFollowingBranch ) & !Jump; // Must assert the instruction is not a jump 
+  assign Stall = (IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt) ) | loadFollowingBranch | EXFollowingBranch) & !Jump; // Must assert the instruction is not a jump 
                                                                                     // (jump signal here is from cycle 2)
   // CONTROL HAZARD HANDLING
 
