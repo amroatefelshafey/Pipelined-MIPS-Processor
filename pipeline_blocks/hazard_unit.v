@@ -10,8 +10,8 @@ module hazard_unit(
 
   input PCSrc, Jump, Branch // Necessary Signals to determine whether we flush/stall or not. Branch is used only to determine stalling
   
-  output [1:0] ForwardA, 
-  output reg [1:0] ForwardB, // Forwarding signals
+  output [1:0] ForwardAE, 
+  output reg [1:0] ForwardBE, // Forwarding signals
   output ForwardDM, // Deals with the load-store hazard
   output Stall, // This deals with load-use hazards which require a 1 cycle stall
   output Flush
@@ -21,32 +21,35 @@ module hazard_unit(
   wire loadFollowingBranch = EXMEMMemRead & ( (EXMEMrd == IFIDrs) | (EXMEMrd == IFIDrt) ) & Branch ; // This deals with load-branch 2nd stall
   wire EXFollowingBranch = IDEXRegWrite & (IDEXrd != 0) & ( (IFIDrs == IDEXrd) | (IFIDrt == IDEXrd) ) & Branch; // This deals with R or I addressing-branch stall
   // DATA HAZARD HANDLING
-  // Forwarding Logic (ForwardA & ForwardB)
+  // Forwarding Logic
 
-  // ----- ForwardA -----
-  assign ForwardA[0] = (IDEXrs == EXMEMrd) & EXMEMRegWrite & (EXMEMrd != 0);
-  assign ForwardA[1] = ForwardA[0] | (MEMWB.rd == IDEXrs) & (MEMWBRegWrite) & (MEMWBrd != 0);
+  // ----- ForwardAE -----
+  assign ForwardAE[0] = (IDEXrs == EXMEMrd) & EXMEMRegWrite & (EXMEMrd != 0);
+  assign ForwardAE[1] = ForwardAE[0] | (MEMWB.rd == IDEXrs) & (MEMWBRegWrite) & (MEMWBrd != 0);
 
-  // ----- ForwardB -----
+  // ----- ForwardBE -----
   always@(*) begin
     if (MEMWBRegWrite & (MEMWBrd !=  0)
         & (!EXMEMRegWrite | (EXMEMrd ==  0) | (EXMEMrd ==  IDEXrt))
-        & (MEMWBrd == IDEXrt)) ForwardB = 2'b10;
+        & (MEMWBrd == IDEXrt)) ForwardBE = 2'b10;
 
     else if (MEMWBRegWrite & (MEMWBrd !=  0)
-             & (MEMWBrd == IDEXrt)) ForwardB = 2'b01;
+             & (MEMWBrd == IDEXrt)) ForwardBE = 2'b01;
     
-    else ForwardB = 2'b00;
+    else ForwardBE = 2'b00;
   end
 
+  // ----- ForwardAD -----
+
   // ----- Load-Store Forwarding Logic (ForwardDM) -----
-  assign ForwardDM = MEMWBMemRead & (MEMWBrd == EXMEMrd);
+  assign ForwardDM = MEMWBMemRead & (MEMWBrd == EXMEMrd); // Adding EXMEMMemWrite as a condition is redundant
   
-  // ----- Load-Use Stalling Logic (Stall, IFIDWrite, PCWrite) -----
+  // ----- Stalling Logic (Stall, IFIDWrite, PCWrite) -----
   assign Stall = (IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt) ) | loadFollowingBranch | EXFollowingBranch) & !Jump; // Must assert the instruction is not a jump 
                                                                                     // (jump signal here is from cycle 2)
   // CONTROL HAZARD HANDLING
-
+  // Flushing Logic
+  
   assign Flush = PCSrc | Jump;
 
 endmodule
