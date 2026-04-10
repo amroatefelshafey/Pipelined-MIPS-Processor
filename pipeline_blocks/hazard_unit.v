@@ -7,6 +7,7 @@ module hazard_unit(
   
   input IDEXRegWrite, EXMEMRegWrite, MEMWBRegWrite, // Conditions for data hazards (if no write, there is no hazard!)
   input IDEXMemRead, EXMEMMemRead, MEMWBMemRead, // These deal with load-use and load-store hazards respectively
+  input MemWriteD, // This is needed as a condition to bypass an unecessary stall in the case of load-store
 
   input PCSrc, Jump, Branch, // Necessary Signals to determine whether we flush/stall or not. Branch is used only to determine stalling
 
@@ -73,7 +74,7 @@ module hazard_unit(
   
   // Stalling Logic (Stall, IFIDWrite, PCWrite)
     
-  assign Stall = (IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt) ) | loadFollowingBranch | EXFollowingBranch) & !Jump; // Must assert the instruction is not a jump 
+  assign Stall = (IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt & !MemWriteD) ) | loadFollowingBranch | EXFollowingBranch) & !Jump; // Must assert the instruction is not a jump 
                                                                                     // (jump signal here is from cycle 2)
     
   // ------------------------------ CONTROL HAZARD HANDLING ------------------------------
