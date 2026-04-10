@@ -8,7 +8,7 @@ module hazard_unit(
   input IDEXRegWrite, EXMEMRegWrite, MEMWBRegWrite, // Conditions for data hazards (if no write, there is no hazard!)
   input IDEXMemRead, EXMEMMemRead, MEMWBMemRead, // These deal with load-use and load-store hazards respectively
 
-  input PCSrc, Jump, Branch // Necessary Signals to determine whether we flush/stall or not. Branch is used only to determine stalling
+  input PCSrc, Jump, Branch, // Necessary Signals to determine whether we flush/stall or not. Branch is used only to determine stalling
 
   output reg [1:0] ForwardAD,
   output [1:0] ForwardAE,
