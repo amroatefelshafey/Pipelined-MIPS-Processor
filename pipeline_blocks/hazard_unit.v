@@ -41,6 +41,29 @@ module hazard_unit(
   end
 
   // ----- ForwardAD -----
+  always@(*) begin
+    if (EXMEMRegWrite & (EXMEMrd !=  0)
+        & (EXMEMrd == IFIDrs)) ForwardAD = 2'b10;
+
+    else if (MEMWBRegWrite & (MEMWBrd !=  0)
+             & !( EXMEMRegWrite & (EXMEMrd !=  0)
+                 & (EXMEMrd == IFIDrs) ) // This is redundant but will keep it for now because its !(if condition)
+             & (MEMWBrd == IFIDrs)) ForwardAD = 2'b01;
+
+    else ForwardAD = 2'b00;
+
+    // ----- ForwardBD -----
+  always@(*) begin
+    if (EXMEMRegWrite & (EXMEMrd !=  0)
+        & (EXMEMrd == IFIDrt)) ForwardBD = 2'b10;
+
+    else if (MEMWBRegWrite & (MEMWBrd !=  0)
+             & !( EXMEMRegWrite & (EXMEMrd !=  0)
+                 & (EXMEMrd == IFIDrt) ) // This is redundant but will keep it for now because its !(if condition)
+             & (MEMWBrd == IFIDrt)) ForwardBD = 2'b01;
+
+    else ForwardBD = 2'b00;
+    
 
   // ----- Load-Store Forwarding Logic (ForwardDM) -----
   assign ForwardDM = MEMWBMemRead & (MEMWBrd == EXMEMrd); // Adding EXMEMMemWrite as a condition is redundant
