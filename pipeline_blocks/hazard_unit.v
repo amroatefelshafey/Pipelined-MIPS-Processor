@@ -28,7 +28,7 @@ module hazard_unit(
 
   // ----- ForwardAE -----
   assign ForwardAE[0] = (IDEXrs == EXMEMrd) & EXMEMRegWrite & (EXMEMrd != 0);
-  assign ForwardAE[1] = ForwardAE[0] | (MEMWB.rd == IDEXrs) & (MEMWBRegWrite) & (MEMWBrd != 0);
+  assign ForwardAE[1] = ForwardAE[0] | (MEMWBrd == IDEXrs) & (MEMWBRegWrite) & (MEMWBrd != 0);
 
   // ----- ForwardBE -----
   always@(*) begin
@@ -54,7 +54,7 @@ module hazard_unit(
              & (MEMWBrd == IFIDrs)) ForwardAD = 2'b01;
 
     else ForwardAD = 2'b00;
-
+  end
     // ----- ForwardBD -----
   always@(*) begin
     if (EXMEMRegWrite & (EXMEMrd !=  0)
@@ -66,7 +66,7 @@ module hazard_unit(
              & (MEMWBrd == IFIDrt)) ForwardBD = 2'b01;
 
     else ForwardBD = 2'b00;
-    
+  end
 
   // ----- Load-Store Forwarding Logic (ForwardDM) -----
   assign ForwardDM = MEMWBMemRead & (MEMWBrd == EXMEMrd); // Adding EXMEMMemWrite as a condition is redundant
