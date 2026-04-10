@@ -9,8 +9,9 @@ module hazard_unit(
   input IDEXMemRead, EXMEMMemRead, MEMWBMemRead, // These deal with load-use and load-store hazards respectively
 
   input PCSrc, Jump, Branch // Necessary Signals to determine whether we flush/stall or not. Branch is used only to determine stalling
-  
-  output [1:0] ForwardAD, ForwardAE, 
+
+  output reg [1:0] ForwardAD,
+  output [1:0] ForwardAE,
   output reg [1:0] ForwardBD, ForwardBE, // Forwarding signals
   output ForwardDM, // Deals with the load-store hazard
   output Stall, // This deals with load-use hazards which require a 1 cycle stall
