@@ -29,11 +29,12 @@ module hazard_unit(
 
   // ----- ForwardBE -----
   always@(*) begin
-    if (MEMWBRegWrite & (MEMWBrd !=  0)
-        & (!EXMEMRegWrite | (EXMEMrd ==  0) | (EXMEMrd ==  IDEXrt))
-        & (MEMWBrd == IDEXrt)) ForwardBE = 2'b10;
+    if (EXMEMRegWrite & (EXMEMrd !=  0)
+        & (EXMEMrd == IDEXrt)) ForwardBE = 2'b10;
 
     else if (MEMWBRegWrite & (MEMWBrd !=  0)
+             & !( EXMEMRegWrite & (EXMEMrd !=  0)
+                 & (EXMEMrd == IDEXrt) ) // This is redundant but will keep it for now because its !(if condition)
              & (MEMWBrd == IDEXrt)) ForwardBE = 2'b01;
     
     else ForwardBE = 2'b00;
