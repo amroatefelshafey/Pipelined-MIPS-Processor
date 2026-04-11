@@ -204,7 +204,7 @@ ALU alu (EX_ALU_A, EX_ALU_B, EX_ALUCtl, EX_ALU_Hi, EX_ALU_Lo, EX_Carry, EX_Zero,
 
 //  Hi/Lo write-back 
 always @(posedge clk) begin
-    if (IDEX_HiLoWrite) begin
+	if (IDEX_HiLoWrite | !Ready ) begin  // NO READY SIGNAL 
         hi <= EX_ALU_Hi;
         lo <= EX_ALU_Lo;
     end
