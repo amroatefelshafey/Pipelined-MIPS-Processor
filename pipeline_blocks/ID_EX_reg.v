@@ -4,7 +4,7 @@ module ID_EX_reg(
 
     // Control signals IN
     input        in_RegDst, in_ALUSrcA, in_ALUSrcB, in_MemtoReg,
-    input        in_RegWrite, in_MemRead, in_MemWrite, in_Branch,
+    input        in_RegWrite, in_MemRead, in_MemWrite,
     input        in_SLT, in_Jump, in_HiLoWrite, in_ExtOp,
     input [1:0]  in_ALUOp,
 
@@ -16,7 +16,7 @@ module ID_EX_reg(
 
     //  Control signals OUT
     output reg        out_RegDst, out_ALUSrcA, out_ALUSrcB, out_MemtoReg,
-    output reg        out_RegWrite, out_MemRead, out_MemWrite, out_Branch,
+    output reg        out_RegWrite, out_MemRead, out_MemWrite,
     output reg        out_SLT, out_Jump, out_HiLoWrite, out_ExtOp
     output reg [1:0]  out_ALUOp,
 
@@ -30,7 +30,7 @@ module ID_EX_reg(
         if (NOP) begin
             out_RegDst   <= 0; out_ALUSrcA  <= 0; out_ALUSrcB  <= 0;
             out_MemtoReg <= 0; out_RegWrite <= 0; out_MemRead  <= 0;
-            out_MemWrite <= 0; out_Branch   <= 0; out_SLT      <= 0;
+            out_MemWrite <= 0; out_SLT      <= 0;
             out_Jump     <= 0; out_HiLoWrite<= 0; out_ALUOp    <= 0;
             out_PC4      <= 0; out_Read_Data1<=0; out_Read_Data2<=0; 
             out_imm16    <= 0; out_rs <= 0; out_rt <= 0; out_ExtOp <= 0;
@@ -38,7 +38,7 @@ module ID_EX_reg(
             out_RegDst   <= in_RegDst;   out_ALUSrcA  <= in_ALUSrcA;
             out_ALUSrcB  <= in_ALUSrcB;  out_MemtoReg <= in_MemtoReg;
             out_RegWrite <= in_RegWrite; out_MemRead  <= in_MemRead;
-            out_MemWrite <= in_MemWrite; out_Branch   <= in_Branch;
+            out_MemWrite <= in_MemWrite;
             out_SLT      <= in_SLT;      out_Jump     <= in_Jump;
             out_HiLoWrite<= in_HiLoWrite; out_ALUOp   <= in_ALUOp; out_ExtOp <= in_ExtOp;
             out_PC4      <= in_PC4; 
