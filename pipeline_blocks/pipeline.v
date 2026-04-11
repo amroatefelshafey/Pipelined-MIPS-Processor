@@ -94,10 +94,10 @@ assign pc_branch     = IFID_PC4 + (ID_imm32 << 2);
 assign pc_jump       = { ID_PC4_upper, ID_jinstr, 2'b00 };
  
 //  Branch Comparator (forward change)
-wire [31:0] BranchA = (ForwardAD == 2'b10) ? EXMEM_ALU_Lo  :
+wire [31:0] BranchA = (ForwardAD == 2'b10) ? EXMEM_ALU :
                       (ForwardAD == 2'b01) ? WB_Write_Data :
                                              ID_Read_Data1;
-wire [31:0] BranchB = (ForwardBD == 2'b10) ? EXMEM_ALU_Lo  :
+wire [31:0] BranchB = (ForwardBD == 2'b10) ? EXMEM_ALU:
                       (ForwardBD == 2'b01) ? WB_Write_Data :
                                              ID_Read_Data2;
 wire   ID_Zero = (BranchA == BranchB);
@@ -107,17 +107,14 @@ assign ID_Jump_taken = ID_Jump;
 //  ID/EX Pipeline Register
 // Control 
 wire        IDEX_RegDst, IDEX_ALUSrcA, IDEX_ALUSrcB, IDEX_MemtoReg;
-wire        IDEX_RegWrite, IDEX_MemRead, IDEX_MemWrite, IDEX_Branch;
-wire        IDEX_SLT, IDEX_Jump, IDEX_HiLoWrite;
+wire        IDEX_RegWrite, IDEX_MemRead, IDEX_MemWrite,
+wire        IDEX_SLT, IDEX_Jump, IDEX_HiLoWrite, IDEX_ExtOp;
 wire [1:0]  IDEX_ALUOp;
 // Data
 wire [31:0] IDEX_PC4;
-wire [3:0]  IDEX_PC4_upper;
 wire [31:0] IDEX_Read_Data1, IDEX_Read_Data2;
-wire [31:0] IDEX_imm32;
-wire [4:0]  IDEX_rs, IDEX_rt, IDEX_rd, IDEX_shamt;
-wire [5:0]  IDEX_funct;
-wire [25:0] IDEX_jinstr;
+wire [31:0] IDEX_imm16;
+wire [4:0]  IDEX_rs, IDEX_rt;
  
 ID_EX_reg ID_EX_REG (
     .clk           (clk),
@@ -131,24 +128,19 @@ ID_EX_reg ID_EX_REG (
     .in_RegWrite   (ID_RegWrite),
     .in_MemRead    (ID_MemRead),
     .in_MemWrite   (ID_MemWrite),
-    .in_Branch     (ID_Branch),
     .in_SLT        (ID_SLT),
     .in_Jump       (ID_Jump),
     .in_HiLoWrite  (ID_HiLoWrite),
     .in_ALUOp      (ID_ALUOp),
+	.in_ExtOp      (ID_ExtOp),
  
     // Data in
     .in_PC4        (IFID_PC4),
-    .in_PC4_upper  (ID_PC4_upper),
     .in_Read_Data1 (ID_Read_Data1),
     .in_Read_Data2 (ID_Read_Data2),
-    .in_imm32      (ID_imm32),
+	.in_imm16      (ID_imm16),
     .in_rs         (ID_rs),
-    .in_rt         (ID_rt),
-    .in_rd         (ID_rd),
-    .in_shamt      (ID_shamt),
-    .in_funct      (ID_funct),
-    .in_jinstr     (ID_jinstr),
+    .in_rt         (ID_rt)
  
     // Control out
     .out_RegDst    (IDEX_RegDst),
@@ -158,24 +150,19 @@ ID_EX_reg ID_EX_REG (
     .out_RegWrite  (IDEX_RegWrite),
     .out_MemRead   (IDEX_MemRead),
     .out_MemWrite  (IDEX_MemWrite),
-    .out_Branch    (IDEX_Branch),
     .out_SLT       (IDEX_SLT),
     .out_Jump      (IDEX_Jump),
     .out_HiLoWrite (IDEX_HiLoWrite),
     .out_ALUOp     (IDEX_ALUOp),
+	.out_ExtOp     (IDEX_ExtOp),
  
     // Data out
     .out_PC4       (IDEX_PC4),
-    .out_PC4_upper (IDEX_PC4_upper),
     .out_Read_Data1(IDEX_Read_Data1),
     .out_Read_Data2(IDEX_Read_Data2),
-    .out_imm32     (IDEX_imm32),
+	.out_imm16     (IDEX_imm16),
     .out_rs        (IDEX_rs),
-    .out_rt        (IDEX_rt),
-    .out_rd        (IDEX_rd),
-    .out_shamt     (IDEX_shamt),
-    .out_funct     (IDEX_funct),
-    .out_jinstr    (IDEX_jinstr)
+    .out_rt        (IDEX_rt)
 );
  
 
@@ -188,7 +175,7 @@ wire [4:0] EX_Write_Reg = IDEX_Jump   ? 5'd31        :
  
 //  ALU (Source) A MUX 
 // (MUX at the top of ALU) (forward change)
-wire [31:0] ForwardA_out = (ForwardAE == 2'b10) ? EXMEM_ALU_Lo  :
+wire [31:0] ForwardA_out = (ForwardAE == 2'b10) ? EXMEM_ALU  :
                            (ForwardAE == 2'b01) ? WB_Write_Data :
                                                   IDEX_Read_Data1;
 wire [31:0] EX_ALU_A_pre = IDEX_ALUSrcA ? {{27{1'b0}}, IDEX_shamt} : ForwardA_out;
@@ -196,7 +183,7 @@ wire [31:0] EX_ALU_A     = IDEX_Jump    ? IDEX_PC4 : EX_ALU_A_pre;
  
 //  ALU Source B MUX 
 //  (MUX at the bottom of ALU) (forward change)
-wire [31:0] ForwardB_out = (ForwardBE == 2'b10) ? EXMEM_ALU_Lo  :
+wire [31:0] ForwardB_out = (ForwardBE == 2'b10) ? EXMEM_ALU :
                            (ForwardBE == 2'b01) ? WB_Write_Data :
                                                   IDEX_Read_Data2;
 wire [31:0] EX_ALU_B_pre = IDEX_ALUSrcB ? IDEX_imm32 : ForwardB_out;
@@ -225,7 +212,7 @@ end
 //  EX/MEM Pipeline Register
 wire        EXMEM_MemRead, EXMEM_MemWrite, EXMEM_MemtoReg, EXMEM_RegWrite;
 wire        EXMEM_SLT, EXMEM_HiLoWrite;
-wire [31:0] EXMEM_ALU_Hi, EXMEM_ALU_Lo;
+wire [31:0] EXMEM_ALU;
 wire        EXMEM_Zero, EXMEM_Sign;
 wire [31:0] EXMEM_Write_Data;  
 wire [4:0]  EXMEM_Write_Reg;
@@ -242,8 +229,7 @@ EX_MEM_reg EX_MEM_REG (
     .in_HiLoWrite  (IDEX_HiLoWrite),
  
     // Data in
-    .in_ALU_Hi     (EX_ALU_Hi),
-    .in_ALU_Lo     (EX_ALU_Lo),
+	.in_ALU        (EX_ALU),
     .in_Zero       (EX_Zero),
     .in_Sign       (EX_Sign),
     .in_Write_Data (ForwardB_out),   // forward change
@@ -258,8 +244,7 @@ EX_MEM_reg EX_MEM_REG (
     .out_HiLoWrite (EXMEM_HiLoWrite),
  
     // Data out
-    .out_ALU_Hi    (EXMEM_ALU_Hi),
-    .out_ALU_Lo    (EXMEM_ALU_Lo),
+    .out_ALU       (EXMEM_ALU),
     .out_Zero      (EXMEM_Zero),
     .out_Sign      (EXMEM_Sign),
     .out_Write_Data(EXMEM_Write_Data),
@@ -272,7 +257,7 @@ wire [31:0] MEM_Read_Data;
 
 // (forward change)
 wire [31:0] MEM_Write_Data = ForwardDM ? MEMWB_Read_Data : EXMEM_Write_Data;
-data_memory DM (clk, EXMEM_ALU_Lo, MEM_Write_Data, EXMEM_MemRead, EXMEM_MemWrite, MEM_Read_Data);
+data_memory DM (clk, EXMEM_ALU, MEM_Write_Data, EXMEM_MemRead, EXMEM_MemWrite, MEM_Read_Data);
  
 //  MEM/WB Pipeline Register
 wire        MEMWB_MemtoReg, MEMWB_RegWrite, MEMWB_SLT, MEMWB_HiLoWrite;
@@ -291,8 +276,7 @@ MEM_WB_reg MEM_WB_REG (
     .in_HiLoWrite  (EXMEM_HiLoWrite),
  
     // Data in
-    .in_ALU_Hi     (EXMEM_ALU_Hi),
-    .in_ALU_Lo     (EXMEM_ALU_Lo),
+    .in_ALU        (EXMEM_ALU),
     .in_Read_Data  (MEM_Read_Data),
     .in_Sign       (EXMEM_Sign),
     .in_Write_Reg  (EXMEM_Write_Reg),
