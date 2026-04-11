@@ -1,5 +1,6 @@
 module hazard_unit(
   input [4:0] IFIDrs, IFIDrt,
+  input [5:0] IFIDOpcode, IFIDFunct,
   input [4:0] IDEXrs, IDEXrt,
   input [4:0] IDEXrd, // Output of the Multiplexer choosing between rd, rt, or 31
   input [4:0] EXMEMrd,
@@ -10,7 +11,8 @@ module hazard_unit(
   input MemWriteD, // This is needed as a condition to bypass an unecessary stall in the case of load-store
 
   input PCSrc, Jump, Branch, // Necessary Signals to determine whether we flush/stall or not. Branch is used only to determine stalling
-
+  input Ready,
+  
   output reg [1:0] ForwardAD,
   output [1:0] ForwardAE,
   output reg [1:0] ForwardBD, ForwardBE, // Forwarding signals
@@ -22,7 +24,7 @@ module hazard_unit(
 
   wire loadFollowingBranch = EXMEMMemRead & ( (EXMEMrd == IFIDrs) | (EXMEMrd == IFIDrt) ) & Branch ; // This deals with load-branch 2nd stall
   wire EXFollowingBranch = IDEXRegWrite & (IDEXrd != 0) & ( (IFIDrs == IDEXrd) | (IFIDrt == IDEXrd) ) & Branch; // This deals with R or I addressing-branch stall
-  
+  wire MultHazard = !Ready & ( IFIDOpcode == 0 & ( IFIDFunct == 6'h10 | IFIDFunct == 6'h12 ) );  // If its MFHi OR MFLo and Mult still calculating result , Stall 
   // ------------------------------ DATA HAZARD HANDLING ------------------------------
   
   // Forwarding Logic
@@ -73,10 +75,9 @@ module hazard_unit(
   assign ForwardDM = MEMWBMemRead & (MEMWBrd == EXMEMrd); // Adding EXMEMMemWrite as a condition is redundant
   
   // Stalling Logic (Stall, IFIDWrite, PCWrite)
-    
-  assign Stall = (IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt & !MemWriteD) ) | loadFollowingBranch | EXFollowingBranch) & !Jump; // Must assert the instruction is not a jump 
-                                                                                    // (jump signal here is from cycle 2)
-    
+   
+  assign Stall = (IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt & !MemWriteD) ) | loadFollowingBranch | EXFollowingBranch | MultHazard ) & !Jump; // Must assert the instruction is not a jump  (jump signal here is from cycle 2)
+  
   // ------------------------------ CONTROL HAZARD HANDLING ------------------------------
     
   // Flushing Logic
