@@ -175,11 +175,13 @@ wire [4:0] EX_Write_Reg = IDEX_Jump   ? 5'd31        :
  
 //  ALU (Source) A MUX 
 // (MUX at the top of ALU) (forward change)
-wire [31:0] ForwardA_out = (ForwardAE == 2'b10) ? EXMEM_ALU  :
-                           (ForwardAE == 2'b01) ? WB_Write_Data :
-                                                  IDEX_Read_Data1;
-wire [31:0] EX_ALU_A_pre = IDEX_ALUSrcA ? {{27{1'b0}}, IDEX_shamt} : ForwardA_out;
-wire [31:0] EX_ALU_A     = IDEX_Jump    ? IDEX_PC4 : EX_ALU_A_pre;
+wire [1:0] select ={ForwardAE[1] ,ForwardAE | (ForwardAE[1] ~| IDEX_ALUSrcA)};
+wire [31:0] ForwardA_out = select == 2'b00 ? IDEX_Read_Data1 :
+	                       select == 2'b01 ?  IDEX_imm16 [10:6] : 
+	                       select == 2'b10 ?  WB_Write_Data     :
+						   select == 2'b11 ?  EXMEM_ALU;
+
+wire [31:0] EX_ALU_A     = IDEX_Jump    ? IDEX_PC4 : ForwardA_out;
  
 //  ALU Source B MUX 
 //  (MUX at the bottom of ALU) (forward change)
@@ -191,7 +193,7 @@ wire [31:0] EX_ALU_B     = IDEX_Jump    ? 32'd4      : EX_ALU_B_pre;
  
 //  ALU Control 
 wire [2:0] EX_ALUCtl;
-alu_control AC (IDEX_ALUOp, IDEX_funct, EX_ALUCtl);
+	alu_control AC (IDEX_ALUOp, IDEX_imm16 [5:0], EX_ALUCtl);
  
 //  ALU 
 wire [31:0] EX_ALU_Hi, EX_ALU_Lo; 
@@ -211,9 +213,9 @@ end
 
 //  EX/MEM Pipeline Register
 wire        EXMEM_MemRead, EXMEM_MemWrite, EXMEM_MemtoReg, EXMEM_RegWrite;
-wire        EXMEM_SLT, EXMEM_HiLoWrite;
+wire        EXMEM_SLT;
 wire [31:0] EXMEM_ALU;
-wire        EXMEM_Zero, EXMEM_Sign;
+wire [31:0] EXMEM_Sign;
 wire [31:0] EXMEM_Write_Data;  
 wire [4:0]  EXMEM_Write_Reg;
  
@@ -226,11 +228,9 @@ EX_MEM_reg EX_MEM_REG (
     .in_MemtoReg   (IDEX_MemtoReg),
     .in_RegWrite   (IDEX_RegWrite),
     .in_SLT        (IDEX_SLT),
-    .in_HiLoWrite  (IDEX_HiLoWrite),
  
     // Data in
 	.in_ALU        (EX_ALU),
-    .in_Zero       (EX_Zero),
     .in_Sign       (EX_Sign),
     .in_Write_Data (ForwardB_out),   // forward change
     .in_Write_Reg  (EX_Write_Reg),
@@ -241,11 +241,9 @@ EX_MEM_reg EX_MEM_REG (
     .out_MemtoReg  (EXMEM_MemtoReg),
     .out_RegWrite  (EXMEM_RegWrite),
     .out_SLT       (EXMEM_SLT),
-    .out_HiLoWrite (EXMEM_HiLoWrite),
  
     // Data out
     .out_ALU       (EXMEM_ALU),
-    .out_Zero      (EXMEM_Zero),
     .out_Sign      (EXMEM_Sign),
     .out_Write_Data(EXMEM_Write_Data),
     .out_Write_Reg (EXMEM_Write_Reg)
@@ -260,10 +258,10 @@ wire [31:0] MEM_Write_Data = ForwardDM ? MEMWB_Read_Data : EXMEM_Write_Data;
 data_memory DM (clk, EXMEM_ALU, MEM_Write_Data, EXMEM_MemRead, EXMEM_MemWrite, MEM_Read_Data);
  
 //  MEM/WB Pipeline Register
-wire        MEMWB_MemtoReg, MEMWB_RegWrite, MEMWB_SLT, MEMWB_HiLoWrite;
+wire        MEMWB_MemtoReg, MEMWB_RegWrite, MEMWB_SLT;
 wire [31:0] MEMWB_ALU_Hi, MEMWB_ALU_Lo;
 wire [31:0] MEMWB_Read_Data;
-wire        MEMWB_Sign;
+wire [31:0] MEMWB_Sign;
 wire [4:0]  MEMWB_Write_Reg;
  
 MEM_WB_reg MEM_WB_REG (
@@ -273,7 +271,6 @@ MEM_WB_reg MEM_WB_REG (
     .in_MemtoReg   (EXMEM_MemtoReg),
     .in_RegWrite   (EXMEM_RegWrite),
     .in_SLT        (EXMEM_SLT),
-    .in_HiLoWrite  (EXMEM_HiLoWrite),
  
     // Data in
     .in_ALU        (EXMEM_ALU),
@@ -285,7 +282,6 @@ MEM_WB_reg MEM_WB_REG (
     .out_MemtoReg  (MEMWB_MemtoReg),
     .out_RegWrite  (MEMWB_RegWrite),
     .out_SLT       (MEMWB_SLT),
-    .out_HiLoWrite (MEMWB_HiLoWrite),
  
     // Data out
     .out_ALU_Hi    (MEMWB_ALU_Hi),
