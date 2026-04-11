@@ -2,12 +2,15 @@ module pipeline(
     input clk
 );
  
+//(forward change)
+wire        Stall, Flush;
+wire [1:0]  ForwardAE, ForwardBE;
+wire [1:0]  ForwardAD, ForwardBD;
+wire        ForwardDM;
 
-wire        IF_ID_Write  = 1'b1;   // always write for now
-wire        IF_ID_NOP    = 1'b0;   // no flush for now
-wire        ID_EX_NOP    = 1'b0;   // no stall / bubble for now
-wire        PC_Write      = 1'b1;  // PC always enabled for now
- 
+wire PC_Write    = ~Stall;
+wire IF_ID_Write = ~Stall;
+
 
 // Hi / Lo  (written in EX stage, latched here at top level)
 reg  [31:0] hi, lo;
@@ -44,8 +47,9 @@ instr_mem IM (pc, IF_instr);
 
 wire [31:0] IFID_PC4;
 wire [31:0] IFID_instr;
- 
-IF_ID_reg IF_ID_REG ( clk, IF_ID_Write, IF_ID_NOP, pc4, IF_instr, IFID_PC4, IFID_instr );
+
+//(forward change)
+IF_ID_reg IF_ID_REG (clk, IF_ID_Write, Flush, pc4, IF_instr, IFID_PC4, IFID_instr);
  
 //  ID STAGE
  
@@ -89,9 +93,15 @@ assign pc_branch     = IFID_PC4 + (ID_imm32 << 2);
 //  Jump Address
 assign pc_jump       = { ID_PC4_upper, ID_jinstr, 2'b00 };
  
-//  Branch Comparator
-wire ID_Zero         = (ID_Read_Data1 == ID_Read_Data2);
-assign PCSrc         = ID_Branch & ID_Zero;
+//  Branch Comparator (forward change)
+wire [31:0] BranchA = (ForwardAD == 2'b10) ? EXMEM_ALU_Lo  :
+                      (ForwardAD == 2'b01) ? WB_Write_Data :
+                                             ID_Read_Data1;
+wire [31:0] BranchB = (ForwardBD == 2'b10) ? EXMEM_ALU_Lo  :
+                      (ForwardBD == 2'b01) ? WB_Write_Data :
+                                             ID_Read_Data2;
+wire   ID_Zero = (BranchA == BranchB);
+assign PCSrc   = ID_Branch & ID_Zero;
 assign ID_Jump_taken = ID_Jump;
  
 //  ID/EX Pipeline Register
@@ -111,7 +121,7 @@ wire [25:0] IDEX_jinstr;
  
 ID_EX_reg ID_EX_REG (
     .clk           (clk),
-    .NOP           (ID_EX_NOP),
+    .NOP           (Stall),
  
     // Control in
     .in_RegDst     (ID_RegDst),
@@ -177,16 +187,20 @@ wire [4:0] EX_Write_Reg = IDEX_Jump   ? 5'd31        :
                           IDEX_RegDst ? IDEX_rd       : IDEX_rt;
  
 //  ALU (Source) A MUX 
-// (MUX at the top of ALU)
-wire [31:0] EX_ALU_A = IDEX_Jump    ? IDEX_PC4                       :
-                       IDEX_ALUSrcA ? {{27{1'b0}}, IDEX_shamt}        :
-                                      IDEX_Read_Data1;
+// (MUX at the top of ALU) (forward change)
+wire [31:0] ForwardA_out = (ForwardAE == 2'b10) ? EXMEM_ALU_Lo  :
+                           (ForwardAE == 2'b01) ? WB_Write_Data :
+                                                  IDEX_Read_Data1;
+wire [31:0] EX_ALU_A_pre = IDEX_ALUSrcA ? {{27{1'b0}}, IDEX_shamt} : ForwardA_out;
+wire [31:0] EX_ALU_A     = IDEX_Jump    ? IDEX_PC4 : EX_ALU_A_pre;
  
 //  ALU Source B MUX 
-//  (MUX at the bottom of ALU)
-wire [31:0] EX_ALU_B = IDEX_Jump    ? 32'd4       :
-                       IDEX_ALUSrcB ? IDEX_imm32  :
-                                      IDEX_Read_Data2;
+//  (MUX at the bottom of ALU) (forward change)
+wire [31:0] ForwardB_out = (ForwardBE == 2'b10) ? EXMEM_ALU_Lo  :
+                           (ForwardBE == 2'b01) ? WB_Write_Data :
+                                                  IDEX_Read_Data2;
+wire [31:0] EX_ALU_B_pre = IDEX_ALUSrcB ? IDEX_imm32 : ForwardB_out;
+wire [31:0] EX_ALU_B     = IDEX_Jump    ? 32'd4      : EX_ALU_B_pre;
  
 //  ALU Control 
 wire [2:0] EX_ALUCtl;
@@ -232,7 +246,7 @@ EX_MEM_reg EX_MEM_REG (
     .in_ALU_Lo     (EX_ALU_Lo),
     .in_Zero       (EX_Zero),
     .in_Sign       (EX_Sign),
-    .in_Write_Data (IDEX_Read_Data2),   // rt value (for SW)
+    .in_Write_Data (ForwardB_out),   // forward change
     .in_Write_Reg  (EX_Write_Reg),
  
     // Control out
@@ -255,8 +269,10 @@ EX_MEM_reg EX_MEM_REG (
 //  MEM STAGE
 
 wire [31:0] MEM_Read_Data;
- 
-data_memory DM (clk, EXMEM_ALU_Lo, EXMEM_Write_Data, EXMEM_MemRead, EXMEM_MemWrite, MEM_Read_Data);
+
+// (forward change)
+wire [31:0] MEM_Write_Data = ForwardDM ? MEMWB_Read_Data : EXMEM_Write_Data;
+data_memory DM (clk, EXMEM_ALU_Lo, MEM_Write_Data, EXMEM_MemRead, EXMEM_MemWrite, MEM_Read_Data);
  
 //  MEM/WB Pipeline Register
 wire        MEMWB_MemtoReg, MEMWB_RegWrite, MEMWB_SLT, MEMWB_HiLoWrite;
@@ -304,6 +320,34 @@ assign WB_RegWrite   = MEMWB_RegWrite;
 assign WB_Write_Data = MEMWB_SLT      ? {{31{1'b0}}, MEMWB_Sign} :
                        MEMWB_MemtoReg ? MEMWB_Read_Data          :
                                         MEMWB_ALU_Lo;
- 
+										
+// Hazard unit
+hazard_unit HU (
+    .IFIDrs       (ID_rs),
+    .IFIDrt       (ID_rt),
+    .IDEXrs       (IDEX_rs),
+    .IDEXrt       (IDEX_rt),
+    .IDEXrd       (EX_Write_Reg),
+    .EXMEMrd      (EXMEM_Write_Reg),
+    .MEMWBrd      (MEMWB_Write_Reg),
+    .IDEXRegWrite (IDEX_RegWrite),
+    .EXMEMRegWrite(EXMEM_RegWrite),
+    .MEMWBRegWrite(MEMWB_RegWrite),
+    .IDEXMemRead  (IDEX_MemRead),
+    .EXMEMMemRead (EXMEM_MemRead),
+    .MEMWBMemRead (MEMWB_MemRead),
+    .MemWriteD    (ID_MemWrite),
+    .PCSrc        (PCSrc),
+    .Jump         (ID_Jump),
+    .Branch       (ID_Branch),
+    .ForwardAD    (ForwardAD),
+    .ForwardAE    (ForwardAE),
+    .ForwardBD    (ForwardBD),
+    .ForwardBE    (ForwardBE),
+    .ForwardDM    (ForwardDM),
+    .Stall        (Stall),
+    .Flush        (Flush)
+);
+									
 endmodule
  
