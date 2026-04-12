@@ -27,9 +27,9 @@ assign Zero = (P == 0);
 assign Product = {A,Q};
 
 // FSM Sequential Logic
-always@(posedge CLK, RST)
+always@(posedge CLK, posedge RST)
 begin
-	if(~RST) State <= 00; else  State <= Next_State;
+	if(RST) State <= 2'b00; else State <= Next_State;
 end
 
 // FSM Output Logic
