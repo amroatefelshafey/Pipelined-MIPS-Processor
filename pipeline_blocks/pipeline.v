@@ -193,14 +193,14 @@ wire [31:0] EX_ALU_B     = IDEX_Jump    ? 32'd4      : EX_ALU_B_pre;
  
 //  ALU Control 
 wire [2:0] EX_ALUCtl;
-	alu_control AC (IDEX_ALUOp, IDEX_imm16 [5:0], EX_ALUCtl);
+alu_control AC (IDEX_ALUOp, IDEX_imm16 [5:0], EX_ALUCtl);
  
 //  ALU 
 	wire [31:0] EX_ALU_OUT, 
 	wire [63:0] EX_ALU_Mult_OUT,
 	wire        EX_Sign, Mult_READY;
  
-	ALU alu (CLK, EX_ALU_A, EX_ALU_B, EX_ALUCtl, EX_ALU_OUT, EX_ALU_Mult_OUT, EX_Sign, Mult_READY);
+	ALU alu (CLK, ID_HiLoWrite, EX_ALU_A, EX_ALU_B, EX_ALUCtl, EX_ALU_OUT, EX_ALU_Mult_OUT, EX_Sign, Mult_READY);
 
 
 //  Hi/Lo write-back 
