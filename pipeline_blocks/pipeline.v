@@ -144,7 +144,7 @@ ID_EX_reg ID_EX_REG (
  
     // Control out
     .out_RegDst    (IDEX_RegDst),
-    .out_ALUSrcA   (IDSrcA),
+	.out_ALUSrcA   (IDEX_ALUSrcA),
     .out_ALUSrcB   (IDEX_ALUSrcB),
     .out_MemtoReg  (IDEX_MemtoReg),
     .out_RegWrite  (IDEX_RegWrite),
