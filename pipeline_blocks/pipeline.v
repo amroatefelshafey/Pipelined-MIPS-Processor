@@ -197,9 +197,9 @@ wire [2:0] EX_ALUCtl;
  
 //  ALU 
 wire [31:0] EX_ALU_Hi, EX_ALU_Lo; 
-wire        EX_Carry, EX_Zero, EX_Sign;
+wire        EX_Sign;
  
-ALU alu (EX_ALU_A, EX_ALU_B, EX_ALUCtl, EX_ALU_Hi, EX_ALU_Lo, EX_Carry, EX_Zero, EX_Sign);
+	ALU alu (CLK, EX_ALU_A, EX_ALU_B, EX_ALUCtl, EX_ALU_Hi, EX_ALU_Lo, EX_Sign);
 
 
 //  Hi/Lo write-back 
