@@ -11,20 +11,20 @@ module ID_EX_reg(
     // Data going IN
     input [31:0] in_PC4, 
     input [31:0] in_Read_Data1, in_Read_Data2,
-    input [15:0] imm16,
-    input [4:0]  rt, rs,
+    input [15:0] in_imm16,
+    input [4:0]  in_rt, in_rs,
 
     //  Control signals OUT
     output reg        out_RegDst, out_ALUSrcA, out_ALUSrcB, out_MemtoReg,
     output reg        out_RegWrite, out_MemRead, out_MemWrite,
-    output reg        out_SLT, out_Jump, out_HiLoWrite, out_ExtOp
+    output reg        out_SLT, out_Jump, out_HiLoWrite, out_ExtOp,
     output reg [1:0]  out_ALUOp,
 
     // Data going OUT 
     output reg [31:0] out_PC4,
     output reg [31:0] out_Read_Data1, out_Read_Data2,
-    input [15:0] out_imm16,
-    input [4:0]  out_rt, out_rs,
+    output reg [15:0] out_imm16,
+    output reg [4:0]  out_rt, out_rs
 );
     always @(posedge clk) begin
         if (NOP) begin
