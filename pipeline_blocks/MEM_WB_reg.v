@@ -11,7 +11,7 @@ module MEM_WB_reg(
     input [31:0] in_Sign,
 
     //  Control signals OUT 
-    output reg        out_MemtoReg, out_RegWrite, out_SLT, out_MemRead
+    output reg        out_MemtoReg, out_RegWrite, out_SLT, out_MemRead,
 
     //  Data going OUT 
     output reg [31:0] out_ALU,
