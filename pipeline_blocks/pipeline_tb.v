@@ -101,7 +101,7 @@ initial begin
     errors = 0;
 
     //Run the CPU
-    for (cycle = 0; cycle < 17; cycle = cycle + 1) begin
+    for (cycle = 0; cycle < 18; cycle = cycle + 1) begin
         @(posedge clk);
         $display("Cycle=%0d | PC=%h | IF_instr=%h | IFID_instr=%h | Stall=%b | Flush=%b",
                  cycle+1,
