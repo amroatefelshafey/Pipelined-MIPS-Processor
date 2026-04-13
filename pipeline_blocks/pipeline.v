@@ -75,7 +75,7 @@ ID_MemWrite, ID_Branch, ID_SLT, ID_Jump, ID_HiLoWrite, ID_ExtOp, ID_ALUOp);
  
 //  Sign / Zero Extender
 wire [31:0] EX_imm32; 
-extender EXTE (ID_imm16, ID_ExtOp, EX_imm32);
+	extender EXTE (IDEX_imm16, ID_ExtOp, EX_imm32);
  
 //  Register File 
 // Write-back values come from WB stage ( 5th stage )
@@ -176,7 +176,7 @@ wire [4:0] EX_Write_Reg = IDEX_Jump   ? 5'd31        :
  
 //  ALU (Source) A MUX 
 // (MUX at the top of ALU) (forward change)
-wire [1:0] select = {ForwardAE[1], (ForwardAE | ~(ForwardAE[1] | IDEX_ALUSrcA))};
+wire [1:0] select = {ForwardAE[1], (ForwardAE[0] | IDEX_ALUSrcA)};
 wire [31:0] ForwardA_out = select == 2'b00 ? IDEX_Read_Data1   :
 	                       select == 2'b01 ? { {27{1'b0}} , IDEX_imm16 [10:6] } : 
 	                       select == 2'b10 ? WB_Write_Data     :
