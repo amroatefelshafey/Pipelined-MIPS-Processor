@@ -81,42 +81,30 @@ initial begin
     $readmemh("data.hex",      uut.DM.mem);
 end
 
+
 // Main run and self-check
 initial begin
     errors = 0;
 
-    //Run the CPU
-for (cycle = 0; cycle < 18; cycle = cycle + 1) begin
-    @(posedge clk);
-    #1;
+    for (cycle = 0; cycle < 17; cycle = cycle + 1) begin
+        @(posedge clk);
+        $display("\n================= Cycle=%0d =================", cycle+1);
 
+        $display("PC=%h | IF_instr=%h | IFID_instr=%h | Stall=%b | Flush=%b",
+                 uut.pc, uut.IF_instr, uut.IFID_instr, uut.Stall, uut.Flush);
 
-    $display("\n================= Cycle=%0d =================", cycle+1);
+        $display("$v0: %h | $t0: %h | Mem[0]: %h\n$t1: %h | $t2: %h | Mem[1]: %h\n$t8: %h | $ra: %h | Mem[2]: %h",
+                 uut.RF.R[2], uut.RF.R[8], uut.DM.mem[0],
+                 uut.RF.R[9], uut.RF.R[10], uut.DM.mem[1],
+                 uut.RF.R[24], uut.RF.R[31], uut.DM.mem[2]);
 
-    // ===== Pipeline Info =====
-    $display("PC=%h | IF_instr=%h | IFID_instr=%h | Stall=%b | Flush=%b",
-             uut.pc,
-             uut.IF_instr,
-             uut.IFID_instr,
-             uut.Stall,
-             uut.Flush);
+        $strobe("{Hi, Lo} = {%h, %h}", uut.hi, uut.lo);
+    end
 
-    // ===== Register + Memory =====
-    $display("\n--- Register File at Time %0t ---", $time);
-
-    $display("$v0: %h | $t0: %h |                                  | Mem[0]: %h |",
-              uut.RF.R[2], uut.RF.R[8], uut.DM.mem[0]);
-
-    $display("$t1: %h | $t2: %h |                                  | Mem[1]: %h |",
-              uut.RF.R[9], uut.RF.R[10], uut.DM.mem[1]);
-
-    $display("$t8: %h | $ra: %h |                                  | Mem[2]: %h |",
-              uut.RF.R[24], uut.RF.R[31], uut.DM.mem[2]);
-
-    // ===== HI / LO =====
-    $strobe("{Hi, Lo} = {%h, %h}", uut.hi, uut.lo);
-
-end
+    force uut.alu.RST = 0;
+    for (cycle = 0; cycle < 54; cycle = cycle + 1)
+        @(posedge clk);
+    release uut.alu.RST;
 
     #10;
 
@@ -200,8 +188,8 @@ if (errors == 0)
 else
     $display("\n TEST FAILED with %0d errors", errors);
 
-#10;
-$finish;
+    #10;
+    $finish;
 end
 
 endmodule
