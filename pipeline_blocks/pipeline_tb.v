@@ -81,103 +81,127 @@ initial begin
     $readmemh("data.hex",      uut.DM.mem);
 end
 
-// Monitor registers and memory
-always @(posedge clk) begin
-    $display("--- Register File at Time %0t ---", $time);
-    $monitor("$v0: %h | $t0: %h | $t1: %h | $t2: %h | $t8: %h | $ra: %h | Mem[0]: %h | Mem[1]: %h | Mem[2]: %h",
-             uut.RF.R[2],  uut.RF.R[8],  uut.RF.R[9],  uut.RF.R[10],
-             uut.RF.R[24], uut.RF.R[31],
-             uut.DM.mem[0], uut.DM.mem[1], uut.DM.mem[2]);
-end
-
-// Monitor {Hi, Lo} after 35 ns
-initial begin
-    #35;
-    $strobe("{Hi, Lo} = {%h, %h}", uut.hi, uut.lo);
-end
-
 // Main run and self-check
 initial begin
     errors = 0;
 
     //Run the CPU
-    for (cycle = 0; cycle < 18; cycle = cycle + 1) begin
-        @(posedge clk);
-        $display("Cycle=%0d | PC=%h | IF_instr=%h | IFID_instr=%h | Stall=%b | Flush=%b",
-                 cycle+1,
-                 uut.pc,
-                 uut.IF_instr,
-                 uut.IFID_instr,
-                 uut.Stall,
-                 uut.Flush);
-    end
+for (cycle = 0; cycle < 18; cycle = cycle + 1) begin
+    @(posedge clk);
+    #1;
+
+
+    $display("\n================= Cycle=%0d =================", cycle+1);
+
+    // ===== Pipeline Info =====
+    $display("PC=%h | IF_instr=%h | IFID_instr=%h | Stall=%b | Flush=%b",
+             uut.pc,
+             uut.IF_instr,
+             uut.IFID_instr,
+             uut.Stall,
+             uut.Flush);
+
+    // ===== Register + Memory =====
+    $display("\n--- Register File at Time %0t ---", $time);
+
+    $display("$v0: %h | $t0: %h |                                  | Mem[0]: %h |",
+              uut.RF.R[2], uut.RF.R[8], uut.DM.mem[0]);
+
+    $display("$t1: %h | $t2: %h |                                  | Mem[1]: %h |",
+              uut.RF.R[9], uut.RF.R[10], uut.DM.mem[1]);
+
+    $display("$t8: %h | $ra: %h |                                  | Mem[2]: %h |",
+              uut.RF.R[24], uut.RF.R[31], uut.DM.mem[2]);
+
+    // ===== HI / LO =====
+    $strobe("{Hi, Lo} = {%h, %h}", uut.hi, uut.lo);
+
+end
 
     #10;
 
        // Self-Checking Section
     $display("\n--- SELF-CHECK ---");
 
-    // $v0
-    if (uut.RF.R[2] !== 32'd730) begin
-        $display("Error: $v0 incorrect = %0d (expected 730)", uut.RF.R[2]);
-        errors = errors + 1;
-    end
+// $v0
+if (uut.RF.R[2] !== 32'd730) begin
+    $display("Error: $v0 incorrect = %0d (expected 730)", uut.RF.R[2]);
+    errors = errors + 1;
+end else begin
+    $display("Correct: $v0 = %0d (expected 730)", uut.RF.R[2]);
+end
 
-    // $t0
-    if (uut.RF.R[8] !== 32'd100) begin
-        $display("Error: $t0 incorrect = %0d (expected 100)", uut.RF.R[8]);
-        errors = errors + 1;
-    end
+// $t0
+if (uut.RF.R[8] !== 32'd100) begin
+    $display("Error: $t0 incorrect = %0d (expected 100)", uut.RF.R[8]);
+    errors = errors + 1;
+end else begin
+    $display("Correct: $t0 = %0d (expected 100)", uut.RF.R[8]);
+end
 
-    // $t1
-    if (uut.RF.R[9] !== 32'd8) begin
-        $display("Error: $t1 incorrect = %0d (expected 8)", uut.RF.R[9]);
-        errors = errors + 1;
-    end
+// $t1
+if (uut.RF.R[9] !== 32'd8) begin
+    $display("Error: $t1 incorrect = %0d (expected 8)", uut.RF.R[9]);
+    errors = errors + 1;
+end else begin
+    $display("Correct: $t1 = %0d (expected 8)", uut.RF.R[9]);
+end
 
-    // $t2
-    if (uut.RF.R[10] !== 32'd70) begin
-        $display("Error: $t2 incorrect = %0d (expected 70)", uut.RF.R[10]);
-        errors = errors + 1;
-    end
+// $t2
+if (uut.RF.R[10] !== 32'd70) begin
+    $display("Error: $t2 incorrect = %0d (expected 70)", uut.RF.R[10]);
+    errors = errors + 1;
+end else begin
+    $display("Correct: $t2 = %0d (expected 70)", uut.RF.R[10]);
+end
 
-    // $t8
-    if (uut.RF.R[24] !== 32'd1) begin
-        $display("Error: $t8 incorrect = %0d (expected 1)", uut.RF.R[24]);
-        errors = errors + 1;
-    end
+// $t8
+if (uut.RF.R[24] !== 32'd1) begin
+    $display("Error: $t8 incorrect = %0d (expected 1)", uut.RF.R[24]);
+    errors = errors + 1;
+end else begin
+    $display("Correct: $t8 = %0d (expected 1)", uut.RF.R[24]);
+end
 
-    // HI / LO
-    if (uut.hi !== 32'd0 || uut.lo !== 32'd800) begin
-        $display("Error: HI/LO incorrect = %0d / %0d (expected 0 / 800)",
-                 uut.hi, uut.lo);
-        errors = errors + 1;
-    end
+// HI / LO
+if (uut.hi !== 32'd0 || uut.lo !== 32'd800) begin
+    $display("Error: HI/LO incorrect = %0d / %0d (expected 0 / 800)", uut.hi, uut.lo);
+    errors = errors + 1;
+end else begin
+    $display("Correct: HI/LO = %0d / %0d (expected 0 / 800)", uut.hi, uut.lo);
+end
 
-    // Memory
-    if (uut.DM.mem[0] !== 32'd100) begin
-        $display("Error: MEM[0] incorrect = %0d (expected 100)", uut.DM.mem[0]);
-        errors = errors + 1;
-    end
+// Memory
+if (uut.DM.mem[0] !== 32'd100) begin
+    $display("Error: MEM[0] incorrect = %0d (expected 100)", uut.DM.mem[0]);
+    errors = errors + 1;
+end else begin
+    $display("Correct: MEM[0] = %0d (expected 100)", uut.DM.mem[0]);
+end
 
-    if (uut.DM.mem[1] !== 32'd70) begin
-        $display("Error: MEM[1] incorrect = %0d (expected 70)", uut.DM.mem[1]);
-        errors = errors + 1;
-    end
+if (uut.DM.mem[1] !== 32'd70) begin
+    $display("Error: MEM[1] incorrect = %0d (expected 70)", uut.DM.mem[1]);
+    errors = errors + 1;
+end else begin
+    $display("Correct: MEM[1] = %0d (expected 70)", uut.DM.mem[1]);
+end
 
-    if (uut.DM.mem[2] !== 32'd800) begin
-        $display("Error: MEM[2] incorrect = %0d (expected 800)", uut.DM.mem[2]);
-        errors = errors + 1;
-    end
+if (uut.DM.mem[2] !== 32'd800) begin
+    $display("Error: MEM[2] incorrect = %0d (expected 800)", uut.DM.mem[2]);
+    errors = errors + 1;
+end else begin
+    $display("Correct: MEM[2] = %0d (expected 800)", uut.DM.mem[2]);
+end
 
-    // Final result
-    if (errors == 0)
-        $display("\n TEST PASSED");
-    else
-        $display("\n TEST FAILED with %0d errors", errors);
 
-    #10;
-    $finish;
+// Final result
+if (errors == 0)
+    $display("\n TEST PASSED");
+else
+    $display("\n TEST FAILED with %0d errors", errors);
+
+#10;
+$finish;
 end
 
 endmodule
