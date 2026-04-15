@@ -201,12 +201,17 @@ alu_control AC (IDEX_ALUOp, IDEX_imm16 [5:0], EX_ALUCtl);
 	wire [63:0] EX_ALU_Mult_OUT;
 	wire        EX_Sign, Mult_READY;
  
-	ALU alu (clk, IDEX_HiLoWrite, EX_ALU_A, EX_ALU_B, EX_ALUCtl, EX_ALU_OUT, EX_ALU_Mult_OUT, EX_Sign, Mult_READY);
+	ALU alu (clk, ID_HiLoWrite, EX_ALU_A, EX_ALU_B, EX_ALUCtl, EX_ALU_OUT, EX_ALU_Mult_OUT, EX_Sign, Mult_READY);
 
 
+	reg Hi_Lo_READY;
+	always@(negedge clk) begin
+		if(Mult_READY == 1) Hi_Lo_READY <= 1; else Hi_Lo_READY <= 0;
+	end
+	
 //  Hi/Lo write-back 
 always @(posedge clk) begin
-	if (IDEX_HiLoWrite | !Mult_READY ) begin
+	if (IDEX_HiLoWrite | !Mult_READY | Hi_Lo_READY) begin
 		{hi, lo} <= EX_ALU_Mult_OUT;
     end
 end
