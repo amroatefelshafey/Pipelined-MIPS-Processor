@@ -173,7 +173,7 @@ ID_EX_reg ID_EX_REG (
 //  Write-Register MUX 
 //  (MUX at the Bottom of the Datapath)
 wire [4:0] EX_Write_Reg = IDEX_Jump   ? 5'd31        :
-                          IDEX_RegDst ? IDEX_imm16 [15:11]       : IDEX_rt;
+						  (IDEX_RegDst === 1'b1) ? IDEX_imm16 [15:11]       : IDEX_rt;
  
 //  ALU (Source) A MUX 
 // (MUX at the top of ALU) (forward change)
