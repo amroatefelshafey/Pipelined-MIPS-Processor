@@ -18,6 +18,11 @@ initial begin
     forever #5 clk = ~clk;
 end
 
+initial begin
+	$dumpfile("pipeline.vcd");
+	$dumpvars(0, pipeline_tb);
+end
+
 // PC, Registers, & Memory Initialization
 initial begin
 
