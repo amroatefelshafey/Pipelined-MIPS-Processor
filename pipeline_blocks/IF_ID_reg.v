@@ -1,7 +1,7 @@
 module IF_ID_reg(
     input        clk,
-    input        Write,   // to allow the data to pass
-    input        NOP,   // for NOP 
+    input        Write,   // For Stalling, disables writing
+    input        NOP,     // For Flushing, clears the whole register
     input [31:0] in_PC,
     input [31:0] in_Instr,
     output reg [31:0] out_PC,
@@ -11,7 +11,9 @@ module IF_ID_reg(
         if (NOP) begin
             out_PC   <= 32'b0;
             out_Instr <= 32'b0; 
-        end else if (Write) begin
+        end 
+        
+        else if (Write) begin
             out_PC   <= in_PC;
             out_Instr <= in_Instr;
         end
