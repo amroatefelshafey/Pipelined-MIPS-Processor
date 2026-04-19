@@ -4,7 +4,7 @@ output reg [31:0] instr // Instruction output
 );
 
 // 32-bit memory
-reg [31:0] mem [0:65535];
+	reg [31:0] mem [0:16383];
 // Word index (word-aligned)
 
 always@(*)
