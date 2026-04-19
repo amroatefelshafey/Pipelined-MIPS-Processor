@@ -82,6 +82,6 @@ module hazard_unit(
     
   // Flushing Logic
   
-  assign Flush = PCSrc | Jump;
+  assign Flush = (PCSrc | Jump) !Stall;
 
 endmodule
