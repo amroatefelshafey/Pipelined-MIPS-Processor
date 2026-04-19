@@ -1,5 +1,6 @@
 module pipeline(
-    input clk
+    input clk,
+	output 
 );
  
 //(forward change)
@@ -16,18 +17,18 @@ wire IF_ID_Write = ~Stall;
 reg  [31:0] hi, lo;
  
 
-//  IF STAGE
+//  --------------------------------------------- IF STAGE ---------------------------------------------
 
  
 // Program Counter 
-reg  [31:0] pc;
+	reg  [31:0] pc;
  
 // pc_next MUX inputs
-wire [31:0] pc4        = pc + 32'd4;             // PC + 4
-wire [31:0] pc_branch;                            // branch target  (computed in ID)
-wire [31:0] pc_jump;                              // JAL target     (computed in ID)
-wire        PCSrc;                                // branch taken signal (from ID)
-wire        ID_Jump_taken;                        // jump signal    (from ID)
+	wire [31:0] pc4        = pc + 32'd4;          	  // PC + 4
+	wire [31:0] pc_branch;                            // branch target  (computed in ID)
+	wire [31:0] pc_jump;                              // JAL target     (computed in ID)
+	wire        PCSrc;                                // branch taken signal (from ID)
+	wire        ID_Jump_taken;                        // jump signal    (from ID)
  
 // PC next-value MUX  (jump > branch > PC+4)
 wire [31:0] pc_next = ID_Jump_taken ? pc_jump    :
@@ -48,10 +49,10 @@ instr_mem IM (pc, IF_instr);
 wire [31:0] IFID_PC4;
 wire [31:0] IFID_instr;
 
-//(forward change)
+//(forward)
 IF_ID_reg IF_ID_REG (clk, IF_ID_Write, Flush, pc4, IF_instr, IFID_PC4, IFID_instr);
  
-//  ID STAGE
+//  --------------------------------------------- ID STAGE ---------------------------------------------
  
 // Instruction decode
 wire [5:0] ID_opcode = IFID_instr[31:26];
@@ -167,7 +168,7 @@ ID_EX_reg ID_EX_REG (
 );
  
 
-//  EX STAGE
+//  --------------------------------------------- EX STAGE ---------------------------------------------
 
 //  Write-Register MUX 
 //  (MUX at the Bottom of the Datapath)
@@ -255,7 +256,7 @@ EX_MEM_reg EX_MEM_REG (
     .out_Write_Reg (EXMEM_Write_Reg)
 );
  
-//  MEM STAGE
+//  --------------------------------------------- MEM STAGE ---------------------------------------------
 
 wire [31:0] MEM_Read_Data;
 
@@ -298,7 +299,7 @@ MEM_WB_reg MEM_WB_REG (
     .out_Write_Reg (MEMWB_Write_Reg)
 );
  
-//  WB STAGE
+//  --------------------------------------------- WB STAGE ---------------------------------------------
  
 // Write-register destination
 assign WB_Write_Reg  = MEMWB_Write_Reg;
