@@ -1,6 +1,6 @@
 module hazard_unit(
   input [4:0] IFIDrs, IFIDrt,
-  input [5:0] IFIDOpcode, IFIDFunct,
+  input [5:0] IFIDOpcode, IFIDFunct,  // Used to detect a mfhi or mflo hazard for the multu
   input [4:0] IDEXrs, IDEXrt,
   input [4:0] IDEXrd, // Output of the Multiplexer choosing between rd, rt, or 31
   input [4:0] EXMEMrd,
@@ -8,7 +8,7 @@ module hazard_unit(
   
   input IDEXRegWrite, EXMEMRegWrite, MEMWBRegWrite, // Conditions for data hazards (if no write, there is no hazard!)
   input IDEXMemRead, EXMEMMemRead, MEMWBMemRead, // These deal with load-use and load-store hazards respectively
-  input MemWriteD, // This is needed as a condition to bypass an unecessary stall in the case of load-store
+  input MemWriteD, // This is needed as a condition to bypass an unecessary stall in the case of a load-store hazard
 
   input PCSrc, Jump, Branch, // Necessary Signals to determine whether we flush/stall or not. Branch is used only to determine stalling
   input Ready,
@@ -16,7 +16,7 @@ module hazard_unit(
   output reg [1:0] ForwardAD,
   output [1:0] ForwardAE,
   output reg [1:0] ForwardBD, ForwardBE, // Forwarding signals
-  output ForwardDM, // Deals with the load-store hazard
+  output ForwardDM, // Deals with the load-store hazard by forwarding from WB
   output Stall, // This deals with load-use hazards which require a 1 cycle stall
   output Flush
 );
@@ -40,7 +40,7 @@ module hazard_unit(
 
     else if (MEMWBRegWrite & (MEMWBrd !=  0)
              & !( EXMEMRegWrite & (EXMEMrd !=  0)
-                 & (EXMEMrd == IDEXrt) ) // This is redundant but will keep it for now because its !(if condition)
+                 & (EXMEMrd == IDEXrt) )
              & (MEMWBrd == IDEXrt)) ForwardBE = 2'b01;
     
     else ForwardBE = 2'b00;
@@ -53,7 +53,7 @@ module hazard_unit(
 
     else if (MEMWBRegWrite & (MEMWBrd !=  0)
              & !( EXMEMRegWrite & (EXMEMrd !=  0)
-                 & (EXMEMrd == IFIDrs) ) // This is redundant but will keep it for now because its !(if condition)
+                 & (EXMEMrd == IFIDrs) )
              & (MEMWBrd == IFIDrs)) ForwardAD = 2'b01;
 
     else ForwardAD = 2'b00;
@@ -65,7 +65,7 @@ module hazard_unit(
 
     else if (MEMWBRegWrite & (MEMWBrd !=  0)
              & !( EXMEMRegWrite & (EXMEMrd !=  0)
-                 & (EXMEMrd == IFIDrt) ) // This is redundant but will keep it for now because its !(if condition)
+                 & (EXMEMrd == IFIDrt) )
              & (MEMWBrd == IFIDrt)) ForwardBD = 2'b01;
 
     else ForwardBD = 2'b00;
@@ -76,7 +76,7 @@ module hazard_unit(
   
   // Stalling Logic (Stall, IFIDWrite, PCWrite)
    
-  assign Stall = (IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt & !MemWriteD) ) | loadFollowingBranch | EXFollowingBranch | MultHazard ) & !Jump; // Must assert the instruction is not a jump  (jump signal here is from cycle 2)
+  assign Stall = (IDEXMemRead & ( (IDEXrt == IFIDrs) | (IDEXrt == IFIDrt & !MemWriteD) ) | loadFollowingBranch | EXFollowingBranch | MultHazard ) & !Jump; // Must assert the instruction is not a jump  (jump signal here is from ID)
   
   // ------------------------------ CONTROL HAZARD HANDLING ------------------------------
     
